@@ -1,3 +1,5 @@
+#Należy aktywować poszczególne zadania w 'mainie', zmieniając wartości True/False
+
 import numpy as np
 import matplotlib . pyplot as plt
 from scipy.integrate import solve_ivp
@@ -22,6 +24,8 @@ def sinSig0_65(t):
 def sinSig0_2(t):
     return 0.1*np.sin(2*np.pi*0.2*t)
 
+def sinSig10(t):
+    return np.sin(10 * t)
 
 def wahadlo(t, x, b, type):
     m=1
@@ -40,6 +44,21 @@ def wahadlo(t, x, b, type):
         dx2 = (sinSig0_65(t) - m * g * l * np.sin(x[0, 0]) - b * x[1, 0]) / (m * l * l + J)
     elif type == 'sin0_2':
         dx2 = (sinSig0_2(t) - m * g * l * np.sin(x[0, 0]) - b * x[1, 0]) / (m * l * l + J)
+    dx=np.array([[dx1],[dx2]])
+    return np.ndarray.tolist(dx.T[0])
+
+def systemRLC(t,x,A,type):
+    R=0.2
+    L=0.1
+    C=0.05
+    x = np.array([x]).T
+    i3=(0.25*x[1,0]/(5-x[1,0]))
+    if type=='step':
+        dx1=(A*step(t)-R*x[0,0]-x[1,0])/L
+        dx2=(x[0,0]-i3)/C
+    elif type=='sine':
+        dx1 = (A * sinSig10(t) - R * x[0, 0] - x[1, 0]) / L
+        dx2 = (x[0, 0] - i3) / C
     dx=np.array([[dx1],[dx2]])
     return np.ndarray.tolist(dx.T[0])
 
@@ -168,7 +187,81 @@ def zadanie3(active):
         #3.5 im mniejsza częstotliwość, tym szybszy okres danego wachadła,
         # a dodatkowo mniejsze odchylenie od odległości między środkiem masy a osią obrotu
 
+def zadanie4(active):
+    if active:
+        #symulacje
+        solStepN10 = solve_ivp(systemRLC, [0, 2], [0, 0], args=[-10, 'step'], rtol=1e-10)
+        solStep2 = solve_ivp(systemRLC, [0, 2], [0, 0], args=[2, 'step'], rtol=1e-10)
+        solStep5 = solve_ivp(systemRLC, [0, 2], [0, 0], args=[5, 'step'], rtol=1e-10)
+        solStep10 = solve_ivp(systemRLC, [0, 2], [0, 0], args=[10, 'step'], rtol=1e-10)
+        solSin2 = solve_ivp(systemRLC, [0, 2], [0, 0], args=[2, 'sine'], rtol=1e-10)
+        solSin10 = solve_ivp(systemRLC, [0, 2], [0, 0], args=[10, 'sine'], rtol=1e-10)
+        #wyciągnięcie wartości napięcia
+        uStepN10=np.array(solStepN10.y[1,:])
+        uStep2 = np.array(solStep2.y[1, :])
+        uStep5 = np.array(solStep5.y[1, :])
+        uStep10 = np.array(solStep10.y[1, :])
+        uSin2 = np.array(solSin2.y[1, :])
+        uSin10 = np.array(solSin10.y[1, :])
+        #wyciągnięcie wartości prądu
+        i1StepN10 = np.array(solStepN10.y[0, :])
+        i1Step2 = np.array(solStep2.y[0, :])
+        i1Step5 = np.array(solStep5.y[0, :])
+        i1Step10 = np.array(solStep10.y[0, :])
+        i1Sin2 = np.array(solSin2.y[0, :])
+        i1Sin10 = np.array(solSin10.y[0, :])
+        #wyliczenie wyjścia
+        yStepN10 = i1StepN10 - ((0.25*uStepN10)/(5-uStepN10))
+        yStep2 = i1Step2 - ((0.25*uStep2)/(5-uStep2))
+        yStep5 = i1Step5 - ((0.25*uStep5)/(5-uStep5))
+        yStep10 = i1Step10 - ((0.25*uStep10)/(5-uStep10))
+        ySin2 = i1Sin2 - ((0.25*uSin2)/(5-uSin2))
+        ySin10 = i1Sin10 - ((0.25*uSin10)/(5-uSin10))
+        #wykresy
+        plt.figure(0)
+        plt.title('Prąd i_1 - step')
+        plt.plot(solStepN10.t,i1StepN10,label='step, A=-10')
+        plt.plot(solStep2.t, i1Step2, label='step, A=2')
+        plt.plot(solStep5.t, i1Step5, label='step, A=5')
+        plt.plot(solStep10.t, i1Step10, label='step, A=10')
+        plt.legend()
+        plt.figure(1)
+        plt.title('Prąd i_1 - sin')
+        plt.plot(solSin2.t, i1Sin2, label='sin, A=2')
+        plt.plot(solSin10.t, i1Sin10, label='sin, A=10')
+        plt.legend()
+        #
+        plt.figure(2)
+        plt.title('Napięcie kondensatora - step')
+        plt.plot(solStepN10.t, uStepN10, label='step, A=-10')
+        plt.plot(solStep2.t, uStep2, label='step, A=2')
+        plt.plot(solStep5.t, uStep5, label='step, A=5')
+        plt.plot(solStep10.t, uStep10, label='step, A=10')
+        plt.legend()
+        plt.figure(3)
+        plt.title('Napięcie kondensatora - sin')
+        plt.plot(solSin2.t, uSin2, label='sin, A=2')
+        plt.plot(solSin10.t, uSin10, label='sin, A=10')
+        plt.legend()
+        #
+        plt.figure(4)
+        plt.title('Prąd i_2 - step')
+        plt.plot(solStepN10.t, yStepN10, label='step, A=-10')
+        plt.plot(solStep2.t, yStep2, label='step, A=2')
+        plt.plot(solStep5.t, yStep5, label='step, A=5')
+        plt.plot(solStep10.t, yStep10, label='step, A=10')
+        plt.legend()
+        plt.figure(5)
+        plt.title('Prąd i_2 - sin')
+        plt.plot(solSin2.t, ySin2, label='sin, A=2')
+        plt.plot(solSin10.t, ySin10, label='sin, A=10')
+        plt.legend()
+        #
+        plt.show()
+
+
 
 if __name__ == '__main__':
     zadanie2(False)
-    zadanie3(True)
+    zadanie3(False)
+    zadanie4(True)
