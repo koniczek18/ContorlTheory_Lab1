@@ -259,8 +259,6 @@ def zadanie4(active):
         #
         plt.show()
 
-
-
 if __name__ == '__main__':
     zadanie2(False)
     zadanie3(False)
