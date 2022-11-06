@@ -13,7 +13,17 @@ def step(t):
 def noSignal(t):
     return np.array([[0]])
 
-def wahadloStep(t, x, b,type):
+def sinSig2(t):
+    return 0.1*np.sin(2*np.pi*2*t)
+
+def sinSig0_65(t):
+    return 0.1*np.sin(2*np.pi*0.65*t)
+
+def sinSig0_2(t):
+    return 0.1*np.sin(2*np.pi*0.2*t)
+
+
+def wahadlo(t, x, b, type):
     m=1
     g=9.81
     J=0.05
@@ -24,6 +34,12 @@ def wahadloStep(t, x, b,type):
         dx2=(noSignal(t)-m*g*l*np.sin(x[0,0])-b*x[1,0])/(m*l*l+J)
     elif type=='step':
         dx2 = (step(t) - m * g * l * np.sin(x[0, 0]) - b * x[1, 0]) / (m * l * l + J)
+    elif type=='sin2':
+        dx2 = (sinSig2(t) - m * g * l * np.sin(x[0, 0]) - b * x[1, 0]) / (m * l * l + J)
+    elif type == 'sin0_65':
+        dx2 = (sinSig0_65(t) - m * g * l * np.sin(x[0, 0]) - b * x[1, 0]) / (m * l * l + J)
+    elif type == 'sin0_2':
+        dx2 = (sinSig0_2(t) - m * g * l * np.sin(x[0, 0]) - b * x[1, 0]) / (m * l * l + J)
     dx=np.array([[dx1],[dx2]])
     return np.ndarray.tolist(dx.T[0])
 
@@ -90,21 +106,23 @@ def zadanie3(active):
         l = 1 / 2
         C=np.array([[l], [-l]])
         #solvery
-        sol0 = solve_ivp(wahadloStep, [0, 60], [np.pi / 2, 0], args=[0,'none'], rtol=1e-10)
+        sol0 = solve_ivp(wahadlo, [0, 60], [np.pi / 2, 0], args=[0, 'none'], rtol=1e-10)
         x0=np.array(sol0.y[0,:])
         y0=C*x0
-        sol1_10 = solve_ivp(wahadloStep, [0, 60], [np.pi / 2, 0],args=[1/10,'none'], rtol=1e-10)
+        sol1_10 = solve_ivp(wahadlo, [0, 60], [np.pi / 2, 0], args=[1 / 10, 'none'], rtol=1e-10)
         x1_10 = np.array(sol1_10.y[0, :])
         y1_10 = C * x1_10
-        sol1_2 = solve_ivp(wahadloStep, [0, 60], [np.pi / 2, 0],args=[1/2,'none'],rtol=1e-10)
+        sol1_2 = solve_ivp(wahadlo, [0, 60], [np.pi / 2, 0], args=[1 / 2, 'none'], rtol=1e-10)
         x1_2 = np.array(sol1_2.y[0, :])
         y1_2 = C * x1_2
         #wykresy
+        #
         plt.figure(0)
         plt.title('Distance - b=0')
         plt.plot(sol0.t,y0[0,:],label='X')
         plt.plot(sol0.t,y0[1,:],label='Y')
         plt.legend()
+        #
         plt.figure(1)
         plt.title('Rodzina charakterystyk fazowych')
         plt.plot(sol0.y[0,:],sol0.y[1,:],label='b=0')
@@ -113,7 +131,42 @@ def zadanie3(active):
         plt.xlabel('Angle')
         plt.ylabel('w')
         plt.legend()
+        #3.4
+        #
+        plt.figure(2)
+        plt.title('Kąt')
+        plt.plot(sol0.t,sol0.y[0,:],label='b=0')
+        plt.plot(sol1_10.t, sol1_10.y[0, :], label='b=1/10')
+        plt.plot(sol1_2.t, sol1_2.y[0, :], label='b=1/2')
+        plt.xlabel('Czas')
+        plt.ylabel('Kąt')
+        #okres drgań na oko 1.81s
+        #TODO 3.4 obliczenia?
+        #3.5
+        solSin2 = solve_ivp(wahadlo, [0, 60], [0, 0], args=[1/10, 'sin2'], rtol=1e-10)
+        solSin0_65 = solve_ivp(wahadlo, [0, 60], [0, 0], args=[1 / 10, 'sin0_65'], rtol=1e-10)
+        solSin0_2 = solve_ivp(wahadlo, [0, 60], [0, 0], args=[1 / 10, 'sin0_2'], rtol=1e-10)
+        x2=np.array(solSin2.y[0,:])
+        x0_65=np.array(solSin0_65.y[0, :])
+        x0_2=np.array(solSin0_2.y[0, :])
+        y2=C*x2
+        y0_65 = C * x0_65
+        y0_2 = C * x0_2
+        plt.figure(3)
+        plt.title('Wymuszenie sinusoidalne - l_X')
+        plt.plot(solSin2.t,y2[0,:],label='f=2')
+        plt.plot(solSin0_65.t, y0_65[0, :], label='f=0.65')
+        plt.plot(solSin0_2.t, y0_2[0, :], label='f=0.2')
+        plt.legend()
+        plt.figure(4)
+        plt.title('Wymuszenie sinusoidalne - l_Y')
+        plt.plot(solSin2.t, y2[1, :], label='f=2')
+        plt.plot(solSin0_65.t, y0_65[1, :], label='f=0.65')
+        plt.plot(solSin0_2.t, y0_2[1, :], label='f=0.2')
+        plt.legend()
         plt.show()
+        #3.5 im mniejsza częstotliwość, tym szybszy okres danego wachadła,
+        # a dodatkowo mniejsze odchylenie od odległości między środkiem masy a osią obrotu
 
 
 if __name__ == '__main__':
